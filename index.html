@@ -1,16 +1,43 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>新年红包</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>新春红包 | 恭喜发财</title>
     <link rel="stylesheet" href="style.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🧧</text></svg>">
+    <style>
+        /* 防止移动端缩放 */
+        html, body {
+            touch-action: manipulation;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+    </style>
 </head>
 <body>
     <div class="red-packet">
         <h2>恭喜发财</h2>
-        <button id="open-btn">開</button>
+        <div class="subtitle">点击金币开启新年好运</div>
+        
+        <!-- 金币按钮 -->
+        <button class="gold-coin" id="open-btn">
+            <span>開</span>
+        </button>
+        
+        <!-- 加载提示 -->
+        <div id="loading"></div>
+        
+        <!-- 结果显示 -->
         <div id="result"></div>
+        
+        <!-- 底部提示 -->
+        <div class="bottom-hint">
+            温馨提示：网络良好时开启效果更佳
+        </div>
     </div>
+    
     <script src="script.js"></script>
 </body>
 </html>
