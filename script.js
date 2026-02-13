@@ -2,25 +2,99 @@
 const openBtn = document.getElementById('open-btn');
 const loadingEl = document.getElementById('loading');
 const resultEl = document.getElementById('result');
+const danmuContainer = document.getElementById('danmu-container');
 
-// ====== 音频相关（新增）=======
+// ====== 音频相关 ======
 let audio = null;
-let hasAskedForAudio = false;   // 是否已经询问过用户
+let hasAskedForAudio = false;
 
-// 初始化音频对象（不预加载）
 function initAudio() {
     if (audio) return;
-    audio = new Audio('lucky.mp3');  // 音频文件放在同一目录
+    audio = new Audio('lucky.mp3');
     audio.preload = 'none';
 }
 
-// 播放音乐（从第6秒开始）
 function playLuckyMusic() {
     if (!audio) initAudio();
-    audio.currentTime = 6;   // 从第6秒播放
+    audio.currentTime = 6;
     audio.play().catch(e => {
-        console.log('自动播放被阻止，用户需要再次交互', e);
+        console.log('自动播放被阻止', e);
     });
+}
+
+// ====== 弹幕生成器 ======
+// 昵称库
+const nicknames = [
+    "我不吃香菜", "你猜我是谁", "大胃王", "幸运锦鲤", 
+    "发财小能手", "红包收割机", "欧皇本皇", "锦鲤附体",
+    "旺财", "福星", "好运连连", "财神爷", "暴富预备役"
+];
+
+// 金额模板
+function getRandomAmount() {
+    return (Math.random()).toFixed(2); // 1.00 ~ 9.99
+}
+
+// 随机手机号（前3位固定151，中间4位隐藏，后4位随机）
+function getRandomPhone() {
+    const last4 = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
+    return `151****${last4}`;
+}
+
+// 弹幕模板
+const danmuTemplates = [
+    () => `恭喜用户 ${getRandomPhone()} 获得 ${getRandomAmount()} 元`,
+    () => `超级幸运！用户「${nicknames[Math.floor(Math.random() * nicknames.length)]}」抽中 ${getRandomAmount()} 元`,
+    () => `用户 ${getRandomPhone()} 领取了 ${getRandomAmount()} 元红包`,
+    () => `${nicknames[Math.floor(Math.random() * nicknames.length)]} 刚刚中了 ${getRandomAmount()} 元！`,
+    () => `🎉 恭喜 ${getRandomPhone()} 获得 ${getRandomAmount()} 元现金`,
+    () => `💰 用户「${nicknames[Math.floor(Math.random() * nicknames.length)]}」抽到 ${getRandomAmount()} 元`,
+];
+
+// 生成一条弹幕
+function createDanmu() {
+    if (!danmuContainer) return;
+
+    // 随机选择一个模板生成内容
+    const template = danmuTemplates[Math.floor(Math.random() * danmuTemplates.length)];
+    const text = template();
+
+    // 创建弹幕元素
+    const danmu = document.createElement('div');
+    danmu.className = 'danmu-item';
+    danmu.textContent = text;
+
+    // 随机垂直位置（10% ~ 90%）
+    const top = Math.random() * 80 + 10; // vh
+    danmu.style.top = top + 'vh';
+
+    // 随机动画时长（7~12秒），让弹幕速度有变化
+    const duration = Math.random() * 5 + 7;
+    danmu.style.animation = `danmuFly ${duration}s linear forwards`;
+
+    // 随机字体大小（可选微调）
+    danmu.style.fontSize = (Math.random() * 4 + 12) + 'px'; // 12~16px
+
+    // 添加到容器
+    danmuContainer.appendChild(danmu);
+
+    // 自动移除（动画结束后 + 0.5秒）
+    setTimeout(() => {
+        if (danmu.parentNode) {
+            danmu.remove();
+        }
+    }, duration * 1000 + 500);
+}
+
+// 启动弹幕（持续生成）
+let danmuInterval;
+function startDanmu() {
+    if (danmuInterval) clearInterval(danmuInterval);
+    // 立即生成一条，然后每隔1.2~2秒生成一条
+    createDanmu();
+    danmuInterval = setInterval(() => {
+        createDanmu();
+    }, Math.random() * 800 + 1200); // 1200~2000ms
 }
 
 // ====== 加载提示文本 ======
@@ -39,7 +113,7 @@ function getRandomLoadingText() {
     return loadingTexts[randomIndex];
 }
 
-// ====== 显示加载动画（稳定版）=======
+// ====== 显示加载动画 ======
 function showLoadingAnimation() {
     let count = 0;
     const maxCount = 4;
@@ -69,7 +143,7 @@ function showLoadingAnimation() {
     return loadingInterval;
 }
 
-// ====== 开红包主函数（稳定版逻辑，完全保留）=======
+// ====== 开红包主函数 ======
 openBtn.addEventListener('click', function() {
     if (this.classList.contains('spinning')) {
         return;
@@ -111,16 +185,15 @@ openBtn.addEventListener('click', function() {
                     this.classList.remove('shaking');
                     this.style.cursor = 'pointer';
 
-                    // === 按钮变为“再试一次”（横向清晰版本）===
+                    // 按钮变为“再试一次”
                     this.classList.add('retry');
                     this.innerHTML = '<span>再试一次</span>';
 
-                    // === 为“再试一次”绑定事件（仅执行一次，自动移除）===
+                    // 为“再试一次”绑定事件（仅执行一次）
                     const retryHandler = function() {
-                        // 移除自身，确保不会重复绑定
                         this.removeEventListener('click', retryHandler);
 
-                        // ---------- 新增：音频询问逻辑（只问一次）----------
+                        // 音频询问（只问一次）
                         if (!hasAskedForAudio) {
                             const wantMusic = confirm('是否增加抽中概率？');
                             if (wantMusic) {
@@ -128,15 +201,14 @@ openBtn.addEventListener('click', function() {
                             }
                             hasAskedForAudio = true;
                         }
-                        // ------------------------------------------------
 
-                        // 重置按钮状态（还原为“開”）
+                        // 重置按钮状态
                         this.classList.remove('retry');
                         this.innerHTML = '<span>開</span>';
                         loadingEl.textContent = "";
                         resultEl.textContent = "";
 
-                        // 延迟后自动点击，重新开始开红包流程
+                        // 延迟后自动点击，重新开红包
                         setTimeout(() => {
                             this.click();
                         }, 300);
@@ -150,22 +222,15 @@ openBtn.addEventListener('click', function() {
     }, waitTime);
 });
 
-// ====== 页面加载完成初始化（稳定版）=======
+// ====== 页面初始化 ======
 window.addEventListener('load', function() {
-    initAudio();   // 创建音频对象，但不加载
+    // 初始化音频对象
+    initAudio();
 
-    const style = document.createElement('style');
-    style.textContent = `
-        @keyframes float {
-            0%, 100% { transform: translateY(0px); }
-            50% { transform: translateY(-8px); }
-        }
-        .gold-coin {
-            animation: float 3s ease-in-out infinite;
-        }
-    `;
-    document.head.appendChild(style);
+    // 启动弹幕（页面一加载就开始飘）
+    startDanmu();
 
+    // 确保红包居中
     setTimeout(() => {
         document.body.style.display = 'flex';
     }, 100);
